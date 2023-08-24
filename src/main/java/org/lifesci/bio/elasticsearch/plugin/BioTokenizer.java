@@ -3,10 +3,10 @@ package org.lifesci.bio.elasticsearch.plugin;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.lifesci.bio.elasticsearch.beanFactory.BioBeanFactory;
+import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 public class BioTokenizer extends Tokenizer {
 
@@ -16,7 +16,7 @@ public class BioTokenizer extends Tokenizer {
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
 
-    private final static List<String> LKIKEDB = Arrays.stream("gene,my".split(",", -1)).toList();
+    private DictionaryService dictionaryService = BioBeanFactory.getDictionaryBean();
 
     private final static String PUNCTION = " -()/";
 
@@ -44,7 +44,7 @@ public class BioTokenizer extends Tokenizer {
                     return true;
                 }
             }
-            else if (PUNCTION.indexOf(ch) != -1 && likeDb(buffer.toString())) {
+            else if (PUNCTION.indexOf(ch) != -1 && dictionaryService.isLike(buffer.toString())) {
                 //buffer.append(ch);
                 tokenEnd++;
                 if(buffer.length()>0){
@@ -68,15 +68,6 @@ public class BioTokenizer extends Tokenizer {
                 ch = (char) ci;
             }
         }
-    }
-
-    /**
-     * 判断空格分词后是否存在db中，是则返回false，不是则返回true
-     * @param token
-     * @return
-     */
-    private boolean likeDb(String token) {
-        return !LKIKEDB.contains(token);
     }
 
     @Override
