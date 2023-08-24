@@ -5,6 +5,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class BioTokenizer extends Tokenizer {
 
@@ -14,6 +16,7 @@ public class BioTokenizer extends Tokenizer {
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
 
+    private final static List<String> LKIKEDB = Arrays.stream("gene,my".split(",", -1)).toList();
 
     private final static String PUNCTION = " -()/";
 
@@ -41,16 +44,14 @@ public class BioTokenizer extends Tokenizer {
                     return true;
                 }
             }
-            else if (PUNCTION.indexOf(ch) != -1) {
+            else if (PUNCTION.indexOf(ch) != -1 && likeDb(buffer.toString())) {
                 //buffer.append(ch);
                 tokenEnd++;
                 if(buffer.length()>0){
                     termAtt.setEmpty().append(buffer);
-                    offsetAtt.setOffset(correctOffset(tokenStart),
-                            correctOffset(tokenEnd));
+                    offsetAtt.setOffset(correctOffset(tokenStart), correctOffset(tokenEnd));
                     return true;
-                }else
-                {
+                }else {
                     ci = input.read();
                     if(ci>64&&ci<91){
                         ci=ci+32;
@@ -67,6 +68,15 @@ public class BioTokenizer extends Tokenizer {
                 ch = (char) ci;
             }
         }
+    }
+
+    /**
+     * 判断空格分词后是否存在db中，是则返回false，不是则返回true
+     * @param token
+     * @return
+     */
+    private boolean likeDb(String token) {
+        return !LKIKEDB.contains(token);
     }
 
     @Override
