@@ -9,6 +9,9 @@ import java.util.Locale;
 public class BioBeanFactory {
 
     private final static String DICTIONARY_TYPE = "BIO_ANALYZER_TYPE";
+    private final static String DICTIONARY_URL = "BIO_ANALYZER_URL";
+    private final static String DICTIONARY_USERNAME = "BIO_ANALYZER_USERNAME";
+    private final static String DICTIONARY_PASSWORD = "BIO_ANALYZER_PASSWORD";
 
     public enum Type {
         MYSQL {
@@ -18,8 +21,8 @@ public class BioBeanFactory {
             }
 
             @Override
-            public DictionaryService getDictonary() {
-                return new MysqlDictionary();
+            public DictionaryService getDictonary(String url, String username, String password) {
+                return new MysqlDictionary(url, username, password);
             }
         },
         MONGO {
@@ -29,7 +32,7 @@ public class BioBeanFactory {
             }
 
             @Override
-            public DictionaryService getDictonary() {
+            public DictionaryService getDictonary(String url, String username, String password) {
                 return new MongoDictionary();
             }
         };
@@ -37,7 +40,7 @@ public class BioBeanFactory {
 
         public abstract String reverseMul();
 
-        public abstract DictionaryService getDictonary();
+        public abstract DictionaryService getDictonary(String url, String username, String password);
 
         public static Type fromString(String op) {
             if (null == op) {
@@ -50,7 +53,13 @@ public class BioBeanFactory {
 
     public final static DictionaryService getDictionaryBean() {
         String type = System.getenv(DICTIONARY_TYPE);
-        System.getenv();
-        return Type.fromString(type).getDictonary();
+        String url = System.getenv(DICTIONARY_URL);
+        String username = System.getenv(DICTIONARY_USERNAME);
+        String password = System.getenv(DICTIONARY_PASSWORD);
+        return Type.fromString(type).getDictonary(url, username, password);
+    }
+
+    public void closeConnection(DictionaryService dictionaryService) {
+        dictionaryService.closeConnection();
     }
 }
