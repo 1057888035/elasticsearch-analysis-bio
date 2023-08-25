@@ -6,5 +6,5 @@ public interface DictionaryService {
 
     boolean isLike(String token);
 
-    void closeConnection() throws SQLException;
+    void closeConnection();
 }

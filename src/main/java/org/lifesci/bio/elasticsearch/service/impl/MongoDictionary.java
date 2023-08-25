@@ -7,4 +7,9 @@ public class MongoDictionary implements DictionaryService {
     public boolean isLike(String token) {
         return false;
     }
+
+    @Override
+    public void closeConnection() {
+
+    }
 }

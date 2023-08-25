@@ -42,7 +42,11 @@ public class MysqlDictionary implements DictionaryService {
     }
 
     @Override
-    public void closeConnection() throws SQLException {
-        connection.close();
+    public void closeConnection() {
+        try {
+            connection.close();
+        } catch (Exception e) {
+            throw new RuntimeException("connection error");
+        }
     }
 }
