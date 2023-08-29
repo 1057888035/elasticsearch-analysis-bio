@@ -22,8 +22,10 @@ public class BioBeanFactory {
 
             @Override
             public DictionaryService getDictonary(String url, String username, String password) {
-                return new MysqlDictionary(url, username, password);
+                //return new MysqlDictionary(url, username, password);
+                return new MysqlDictionary("jdbc:mysql://192.168.26.60:13326/smartherb?autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai", "root","Help7777");
             }
+
         },
         MONGO {
             @Override
@@ -33,7 +35,7 @@ public class BioBeanFactory {
 
             @Override
             public DictionaryService getDictonary(String url, String username, String password) {
-                return new MongoDictionary();
+                return new MongoDictionary(url);
             }
         };
         Type() {}
@@ -57,9 +59,5 @@ public class BioBeanFactory {
         String username = System.getenv(DICTIONARY_USERNAME);
         String password = System.getenv(DICTIONARY_PASSWORD);
         return Type.fromString(type).getDictonary(url, username, password);
-    }
-
-    public void closeConnection(DictionaryService dictionaryService) {
-        dictionaryService.closeConnection();
     }
 }

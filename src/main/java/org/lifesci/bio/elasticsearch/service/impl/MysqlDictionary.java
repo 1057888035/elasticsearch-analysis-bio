@@ -1,60 +1,61 @@
 package org.lifesci.bio.elasticsearch.service.impl;
 
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
+import org.lifesci.bio.elasticsearch.service.impl.bean.BioDictionary;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MysqlDictionary implements DictionaryService {
 
     private String url;
-
     private String username;
-
     private String password;
 
+    private List<BioDictionary> dictionaryMap = new ArrayList<>();
 
-    private Connection connection;
+
+
 
     public MysqlDictionary(String url, String username, String password) {
         this.url = url;
         this.username = username;
         this.password = password;
+        init();
+    }
+
+    private void init() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(url, username, password);
+            Connection connection = DriverManager.getConnection(url, username, password);
+            String sql = "select `id`,`name`,`term`,`type` from bio_dictionary";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Long id = resultSet.getLong(1);
+                String name = resultSet.getString(2);
+                String term = resultSet.getString(3);
+                String type = resultSet.getString(4);
+                dictionaryMap.add(new BioDictionary(id, name, term, type));
+            }
         } catch (Exception e) {
-            throw new RuntimeException("DB create error");
+            e.printStackTrace();
         }
     }
 
     @Override
     public boolean isLike(String token) {
-        try {
-            String sql = "select `name` from bio_dictionary where `name` = ?" ;
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-
-            List<String> names = new ArrayList<>();
-            while (resultSet.next()) {
-                names.add(resultSet.getString(1));
-            }
-            if (names.isEmpty() || (names.size() == 1 && names.get(0).equals(token))) {
-                return false;
-            } else {
-                return true;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("");
+        List<BioDictionary> list = dictionaryMap.stream().filter(dictionary -> {
+            return dictionary.containsName(token);
+        }).collect(Collectors.toList());
+        if (list.isEmpty()) {
+            return true;
         }
-    }
-
-    @Override
-    public void closeConnection() {
-        try {
-            connection.close();
-        } catch (Exception e) {
-            throw new RuntimeException("connection error");
+        if (list.size() == 1 && list.get(0).getName().equals(token)) {
+            return true;
+        } else {
+            return false;
         }
     }
 }

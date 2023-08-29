@@ -3,10 +3,14 @@ package org.lifesci.bio.elasticsearch.plugin;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.elasticsearch.SpecialPermission;
 import org.lifesci.bio.elasticsearch.beanFactory.BioBeanFactory;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
 import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.List;
 
 public class BioTokenizer extends Tokenizer {
 
@@ -22,12 +26,12 @@ public class BioTokenizer extends Tokenizer {
 
     @Override
     public final boolean incrementToken() throws IOException {
+        SpecialPermission.check();
         clearAttributes();
         buffer.setLength(0);
         int ci;
         char ch;
         tokenStart = tokenEnd;
-
         ci = input.read();
         if(ci>64&&ci<91){
             ci=ci+32;
@@ -44,7 +48,11 @@ public class BioTokenizer extends Tokenizer {
                     return true;
                 }
             }
-            else if (PUNCTION.indexOf(ch) != -1 && dictionaryService.isLike(buffer.toString())) {
+            else if (PUNCTION.indexOf(ch) != -1 &&
+                    AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> {
+                        return dictionaryService.isLike(buffer.toString());
+                    })
+            ) {
                 //buffer.append(ch);
                 tokenEnd++;
                 if(buffer.length()>0){
@@ -68,6 +76,12 @@ public class BioTokenizer extends Tokenizer {
                 ch = (char) ci;
             }
         }
+    }
+
+    private String getNexSplit(String s) {
+        StringBuilder buffer = new StringBuilder();
+
+        return "";
     }
 
     @Override

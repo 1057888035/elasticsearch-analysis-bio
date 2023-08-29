@@ -5,6 +5,4 @@ import java.sql.SQLException;
 public interface DictionaryService {
 
     boolean isLike(String token);
-
-    void closeConnection();
 }

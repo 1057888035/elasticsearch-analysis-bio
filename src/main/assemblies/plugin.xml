@@ -18,6 +18,11 @@
             <outputDirectory/>
             <filtered>true</filtered>
         </file>
+        <file>
+            <source>${project.basedir}/src/main/resources/plugin-security.policy</source>
+            <outputDirectory/>
+            <filtered>true</filtered>
+        </file>
     </files>
     <dependencySets>
         <dependencySet>
@@ -27,6 +32,14 @@
             <excludes>
                 <exclude>org.elasticsearch:elasticsearch</exclude>
             </excludes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory/>
+            <useProjectArtifact>true</useProjectArtifact>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <includes>
+                <include>com.mysql</include>
+            </includes>
         </dependencySet>
     </dependencySets>
 </assembly>
