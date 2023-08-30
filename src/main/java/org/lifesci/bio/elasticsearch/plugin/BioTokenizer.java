@@ -78,12 +78,6 @@ public class BioTokenizer extends Tokenizer {
         }
     }
 
-    private String getNexSplit(String s) {
-        StringBuilder buffer = new StringBuilder();
-
-        return "";
-    }
-
     @Override
     public void reset() throws IOException {
         super.reset();

@@ -1,8 +1,11 @@
 package org.lifesci.bio.elasticsearch.service.impl;
 
+import org.elasticsearch.SpecialPermission;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 import org.lifesci.bio.elasticsearch.service.impl.bean.BioDictionary;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,7 +25,12 @@ public class MysqlDictionary implements DictionaryService {
         this.url = url;
         this.username = username;
         this.password = password;
-        init();
+        SpecialPermission.check();
+        AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> {
+            init();
+            return true;
+        });
+
     }
 
     private void init() {
