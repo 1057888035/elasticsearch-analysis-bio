@@ -23,7 +23,7 @@ public class BioBeanFactory {
             @Override
             public DictionaryService getDictonary(String url, String username, String password) {
                 //return new MysqlDictionary(url, username, password);
-                return MysqlDictionary.getInstance("jdbc:mysql://192.168.26.60:13326/smartherb?autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai", "root","Help7777");
+                return MysqlDictionary.getInstance(url, username, password);
             }
 
         },
