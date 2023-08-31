@@ -26,7 +26,7 @@ public class MongoDictionary implements DictionaryService {
     }
 
     @Override
-    public boolean isLike(String token) {
+    public String isLike(String token) {
         MongoDatabase database = mongoClient.getDatabase("pubmed");
         MongoCollection<Document> bioDictionary = database.getCollection("bio_dictionary");
 
@@ -40,11 +40,11 @@ public class MongoDictionary implements DictionaryService {
             names.add(iterator.next().get("name").toString());
         }
         if (names.size() == 1 && names.get(0).equals(token)) {
-            return true;
+            return "true";
         } else if (names.size() > 1|| names.size() == 1) {
-            return false;
+            return "false";
         } else {
-            return true;
+            return "true";
         }
     }
 }
