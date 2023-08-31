@@ -26,4 +26,3 @@ CREATE TABLE `bio_dictionary` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=315345 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
-当前版本存在问题，当字典过大时会导致索引崩溃
