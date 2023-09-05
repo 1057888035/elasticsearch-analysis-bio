@@ -81,6 +81,7 @@ public class Lexeme implements Comparable<Lexeme>{
 		}
 		this.length = length;
 		this.lexemeType = lexemeType;
+		this.typeString = getLexemeTypeString();
 	}
 	
     /*
