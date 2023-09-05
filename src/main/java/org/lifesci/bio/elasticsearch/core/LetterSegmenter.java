@@ -247,14 +247,17 @@ class LetterSegmenter implements ISegmenter {
 				context.addLexeme(newLexeme);
 				englishStart = englishStart + hit.get(0);
 				for (int i = 1; i < hit.size(); i++) {
-					newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
+					if (hit.get(i) - hit.get(i - 1) > 0) {
+						newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
+						context.addLexeme(newLexeme);
+					}
 					englishStart = englishStart + hit.get(i) - hit.get(i-1) + 1;
-					context.addLexeme(newLexeme);
 				}
-				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart, Lexeme.TYPE_ENGLISH);
+				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, this.englishEnd - this.englishStart, Lexeme.TYPE_ENGLISH);
 				context.addLexeme(newLexeme);
 				this.englishStart = -1;
 				this.englishEnd = -1;
+				this.hit = new ArrayList<>();
 			} else {
 				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
 				this.englishStart = -1;
