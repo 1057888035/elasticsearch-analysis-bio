@@ -9,7 +9,7 @@ public class BioAnalyzerTest {
     @Test
     public void testAnalyzer() throws Exception {
         BioAnalyzer analyzer = new BioAnalyzer();
-        StringReader reader = new StringReader("Parkinson's disease dsafsgsf dgsdg");
+        StringReader reader = new StringReader("Maternal Hypotension is disease of test111");
         TokenStream ts = analyzer.tokenStream("", reader);
         CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
         ts.reset();

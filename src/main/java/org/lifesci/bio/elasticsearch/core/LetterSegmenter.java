@@ -28,7 +28,9 @@ import com.mysql.cj.util.StringUtils;
 import org.lifesci.bio.elasticsearch.beanFactory.BioBeanFactory;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 英文字符及阿拉伯数字子分词器
@@ -80,7 +82,7 @@ class LetterSegmenter implements ISegmenter {
 
 	private DictionaryService dictionaryService = BioBeanFactory.getDictionaryBean();
 
-	private int hit =0;
+	private List<Integer> hit = new ArrayList<>();
 
 	LetterSegmenter() {
 		Arrays.sort(Letter_Connector);
@@ -201,7 +203,6 @@ class LetterSegmenter implements ISegmenter {
 			}
 		} else {//当前的分词器正在处理英文字符
 			char c = context.getSegmentBuff()[context.getCursor()];
-			int i = (int) c;
 			if (
 					CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType() ||
 					CharacterUtil.CHAR_ARABIC == context.getCurrentCharType() ||
@@ -211,9 +212,7 @@ class LetterSegmenter implements ISegmenter {
 				//记录当前指针位置为结束位置
 				this.englishEnd = context.getCursor();
 			} else {
-				if (this.hit == 0) {
-					this.hit = this.englishEnd - this.englishStart + 1;
-				}
+				this.hit.add(this.englishEnd - this.englishStart + 1);
 				String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
 				if (!StringUtils.isNullOrEmpty(type)) {
 					//遇到非English字符,并且该单词在字典中，输出词元
@@ -221,12 +220,13 @@ class LetterSegmenter implements ISegmenter {
 					context.addLexeme(newLexeme);
 					this.englishStart = -1;
 					this.englishEnd = -1;
+					this.hit = new ArrayList<>();
 				}else if (!dictionaryService.isLike(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1)) {
-					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit, Lexeme.TYPE_ENGLISH);
+					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
 					context.addLexeme(newLexeme);
 					this.englishStart = -1;
 					this.englishEnd = -1;
-					this.hit = 0;
+					this.hit = new ArrayList<>();
 				}
 
 			}
@@ -236,15 +236,31 @@ class LetterSegmenter implements ISegmenter {
 		if (context.isBufferConsumed() && (this.englishStart != -1 && this.englishEnd != -1)) {
 			//缓冲以读完，输出词元
 			String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
-			Lexeme newLexeme;
+			Lexeme newLexeme = null;
 			if (!StringUtils.isNullOrEmpty(type)) {
 				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
+				this.englishStart = -1;
+				this.englishEnd = -1;
+				context.addLexeme(newLexeme);
+			} else if (hit.size() > 0) {
+				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
+				context.addLexeme(newLexeme);
+				englishStart = englishStart + hit.get(0);
+				for (int i = 1; i < hit.size(); i++) {
+					newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
+					englishStart = englishStart + hit.get(i) - hit.get(i-1) + 1;
+					context.addLexeme(newLexeme);
+				}
+				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart, Lexeme.TYPE_ENGLISH);
+				context.addLexeme(newLexeme);
+				this.englishStart = -1;
+				this.englishEnd = -1;
 			} else {
-				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, Lexeme.TYPE_ENGLISH);
+				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
+				this.englishStart = -1;
+				this.englishEnd = -1;
+				context.addLexeme(newLexeme);
 			}
-			context.addLexeme(newLexeme);
-			this.englishStart = -1;
-			this.englishEnd = -1;
 		}
 
 		//判断是否锁定缓冲区

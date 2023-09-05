@@ -1,21 +1,14 @@
-I have a project
-"benzylpenicillin allergy" is a keyword , this equals "benzyl penicillin allergy".
+# 生物信息分词插件
+## 1.介绍：基于IK分词器实现，对英文单词进行组合分词
 
-Now, there is a text
-```http request
-POST /index/_doc
-{
-    "text": "benzyl penicillin allergy should not be used in tissues with poor blood flow. If allergic symptoms occur (e.g. skin rash, itching, shortness of breath), tell a doctor immediately . Before treatment, a hypersensitivity test should be performed if possible."
-}
+## 2.改造内容:
 
-```
+* 对 <LetterSegmenter>进行修改。
+* 一个单词如果在库中有匹配的片段则拼接下一个单词，直到拼接后的词等于数据库中的词。
+* 如果到最后发现该组合词在数据库中不存在，则进行回退。
+* 如果组合词在数据库中存在，则返回该类型
 
-I want this document ,when I search for "benzylpenicillin allergy" .
-
-I use standard analyzer, it will be analyze to "benzylpenicillin, allergy" ，
-which is not feasible , be because I still have some document containing "allergy" or "penicillin" .
-
-This MySql Database:
+### Database:
 
 ```mysql
 CREATE TABLE `bio_dictionary` (
@@ -26,3 +19,33 @@ CREATE TABLE `bio_dictionary` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=315345 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
+
+## 3.使用方法:
+
+```shell
+# 打包
+maven clean package
+# 打包后生成 elasticsearch-analysis-bio-8.9.0.zip 文件
+elasticsearch-analysis-bio-8.9.0.zip
+# 将文件放到pPlugin/bio目录下后解压
+cp  elasticsearch-analysis-bio-8.9.0.zip /{es_home}/plugin/bio
+unzip elasticsearch-analysis-bio-8.9.0.zip
+# 为Elasticsearch的环境设置环境变量
+1. BIO_ANALYZER_TYPE        ex: mysql
+2. BIO_ANALYZER_URL         ex: jdbc:mysql://127.0.0.1:3306/bio
+3. BIO_ANALYZER_USERNAME    ex: root
+4. BIO_ANALYZER_PASSWORD    ex: password
+# 启动Elasticsearch
+```
+
+使用：
+
+```http
+GET _analyze
+{
+    "analyzer":"bio_smart",
+    //"tokenizer":"bio_word",
+   "text": "Maternal Hypotension is di"
+}
+```
+
