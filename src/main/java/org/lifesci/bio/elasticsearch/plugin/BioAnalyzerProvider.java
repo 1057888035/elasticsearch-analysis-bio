@@ -4,6 +4,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.analysis.AbstractIndexAnalyzerProvider;
+import org.lifesci.bio.elasticsearch.cfg.Configuration;
 
 public class BioAnalyzerProvider extends AbstractIndexAnalyzerProvider<BioAnalyzer> {
 
@@ -12,7 +13,8 @@ public class BioAnalyzerProvider extends AbstractIndexAnalyzerProvider<BioAnalyz
 
     public BioAnalyzerProvider(IndexSettings indexSettings, Environment environment, String s, Settings settings) {
         super(s, settings);
-        this.bioAnalyzer = new BioAnalyzer();
+        Configuration configuration = new Configuration(environment, settings).setUseSmart(true);
+        this.bioAnalyzer = new BioAnalyzer(configuration);
     }
 
 

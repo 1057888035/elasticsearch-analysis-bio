@@ -2,84 +2,59 @@ package org.lifesci.bio.elasticsearch.plugin;
 
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttributeImpl;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PackedTokenAttributeImpl;
-import org.lifesci.bio.elasticsearch.beanFactory.BioBeanFactory;
-import org.lifesci.bio.elasticsearch.service.DictionaryService;
+import org.lifesci.bio.elasticsearch.cfg.Configuration;
+import org.lifesci.bio.elasticsearch.core.IKSegmenter;
+import org.lifesci.bio.elasticsearch.core.Lexeme;
 
 import java.io.IOException;
 
 public class BioTokenizer extends Tokenizer {
 
-    private final StringBuilder buffer = new StringBuilder();
     private int suffixOffset;
     private int tokenStart = 0, tokenEnd = 0;
-    private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
-    private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
+    private final CharTermAttribute termAtt;
+    private final OffsetAttribute offsetAtt;
 
-    private DictionaryService dictionaryService = BioBeanFactory.getDictionaryBean();
+    private IKSegmenter bioSegmenter;
 
-    private final static String PUNCTION = " -()/";
+    public BioTokenizer(Configuration configuration) {
+        super();
+        termAtt = addAttribute(CharTermAttribute.class);
+        offsetAtt = addAttribute(OffsetAttribute.class);
+        this.bioSegmenter = new IKSegmenter(input, configuration);
+    }
 
     @Override
     public final boolean incrementToken() throws IOException {
         clearAttributes();
-        buffer.setLength(0);
-        int ci;
-        char ch;
-        tokenStart = tokenEnd;
-        ci = input.read();
-        if(ci>64&&ci<91){
-            ci=ci+32;
+        Lexeme nextLexeme = bioSegmenter.next();
+        if (nextLexeme != null) {
+            termAtt.append(nextLexeme.getLexemeText());
+            termAtt.setLength(nextLexeme.getLength());
+            offsetAtt.setOffset(correctOffset(nextLexeme.getBeginPosition()), correctOffset(nextLexeme.getEndPosition()));
+            tokenEnd = nextLexeme.getEndPosition();
+            ((PackedTokenAttributeImpl) termAtt).setType(nextLexeme.getTypeString());
+            return true;
         }
-        ch = (char) ci;
-        while (true) {
-            if (ci == -1){
-                if (buffer.length() == 0)
-                    return false;
-                else {
-                    termAtt.setEmpty().append(buffer);
-                    offsetAtt.setOffset(correctOffset(tokenStart),
-                            correctOffset(tokenEnd));
-                    return true;
-                }
-            } else if (PUNCTION.indexOf(ch) != -1 && !dictionaryService.isLike(buffer.toString()).equals("false")) {
-                //buffer.append(ch);
-                tokenEnd++;
-                if (buffer.length() > 0) {
-                    termAtt.setEmpty().append(buffer);
-                    ((PackedTokenAttributeImpl) termAtt).setType(dictionaryService.isLike(buffer.toString()));
-                    offsetAtt.setOffset(correctOffset(tokenStart), correctOffset(tokenEnd));
-                    return true;
-                } else {
-                    ci = input.read();
-                    if (ci > 64 && ci < 91) {
-                        ci = ci + 32;
-                    }
-                    ch = (char) ci;
-                }
-            } else {
-                buffer.append(ch);
-                tokenEnd++;
-                ci = input.read();
-                if (ci > 64 && ci < 91) {
-                    ci = ci + 32;
-                }
-                ch = (char) ci;
-            }
-        }
+        return false;
     }
+
+
 
     @Override
     public void reset() throws IOException {
         super.reset();
+        bioSegmenter.reset(input);
         tokenStart = tokenEnd = 0;
     }
 
     @Override
     public void end() throws IOException {
+        super.end();
         final int finalOffset = correctOffset(suffixOffset);
         this.offsetAtt.setOffset(finalOffset, finalOffset);
+
     }
 }

@@ -1,7 +1,6 @@
 package org.lifesci.bio.elasticsearch.beanFactory;
 
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
-import org.lifesci.bio.elasticsearch.service.impl.MongoDictionary;
 import org.lifesci.bio.elasticsearch.service.impl.MysqlDictionary;
 
 import java.util.Locale;
@@ -26,7 +25,7 @@ public class BioBeanFactory {
                 return MysqlDictionary.getInstance(url, username, password);
             }
 
-        },
+        }/*,
         MONGO {
             @Override
             public String reverseMul() {
@@ -37,7 +36,7 @@ public class BioBeanFactory {
             public DictionaryService getDictonary(String url, String username, String password) {
                 return new MongoDictionary(url);
             }
-        };
+        }*/;
         Type() {}
 
         public abstract String reverseMul();

@@ -38,6 +38,14 @@
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <includes>
+                <include>org.apache.httpcomponents:httpclient</include>
+            </includes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory/>
+            <useProjectArtifact>true</useProjectArtifact>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <includes>
                 <include>com.mysql</include>
             </includes>
         </dependencySet>

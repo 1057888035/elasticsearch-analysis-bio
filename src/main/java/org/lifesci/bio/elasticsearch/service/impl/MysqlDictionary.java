@@ -65,14 +65,20 @@ public class MysqlDictionary implements DictionaryService {
     }
 
     @Override
-    public String isLike(String token) {
-        if (list.containsKey(token)) {
-            return list.get(token);
+    public boolean isLike(char[] segmentBuff, int englishStart, int i) {
+        StringBuilder builder = new StringBuilder();
+        for (int j = englishStart; j < englishStart + i; j++) {
+            builder.append(segmentBuff[j]);
         }
-        if (filter.mightContain(token)) {
-            return "false";
-        } else {
-            return "word";
+        return filter.mightContain(builder.toString().toLowerCase());
+    }
+
+    @Override
+    public String isMe(char[] segmentBuff, int englishStart, int i) {
+        StringBuilder builder = new StringBuilder();
+        for (int j = englishStart; j < englishStart + i; j++) {
+            builder.append(segmentBuff[j]);
         }
+        return list.get(builder.toString().toLowerCase());
     }
 }

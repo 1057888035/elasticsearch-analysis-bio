@@ -4,5 +4,7 @@ import java.sql.SQLException;
 
 public interface DictionaryService {
 
-    String isLike(String token);
+    boolean isLike(char[] segmentBuff, int englishStart, int i);
+
+    String isMe(char[] segmentBuff, int englishStart, int i);
 }
