@@ -9,7 +9,7 @@ public class BioAnalyzerTest {
     @Test
     public void testAnalyzer() throws Exception {
         BioAnalyzer analyzer = new BioAnalyzer();
-        StringReader reader = new StringReader("Disease of capillaries,metabolic diseases equals this dis");
+        StringReader reader = new StringReader("Parkinson's disease dsafsgsf dgsdg");
         TokenStream ts = analyzer.tokenStream("", reader);
         CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
         ts.reset();

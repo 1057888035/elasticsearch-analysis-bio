@@ -12,7 +12,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MysqlDictionary implements DictionaryService {
+public class MysqlDictionary extends BaseDictionary implements DictionaryService {
 
     private static MysqlDictionary mysqlDictionary;
     public static DictionaryService getInstance(String s, String root, String help7777) {
@@ -26,11 +26,7 @@ public class MysqlDictionary implements DictionaryService {
     private String username;
     private String password;
 
-    private BloomFilter<String> filter = BloomFilter.create(Funnels.stringFunnel(Charset.defaultCharset()), 1000000, 0.01);
-
-    private Map<String, String> list = new HashMap<>();
-
-    public MysqlDictionary(String url, String username, String password) {
+    private MysqlDictionary(String url, String username, String password) {
         this.url = url;
         this.username = username;
         this.password = password;
@@ -62,23 +58,5 @@ public class MysqlDictionary implements DictionaryService {
             }
             return true;
         });
-    }
-
-    @Override
-    public boolean isLike(char[] segmentBuff, int englishStart, int i) {
-        StringBuilder builder = new StringBuilder();
-        for (int j = englishStart; j < englishStart + i; j++) {
-            builder.append(segmentBuff[j]);
-        }
-        return filter.mightContain(builder.toString().toLowerCase());
-    }
-
-    @Override
-    public String isMe(char[] segmentBuff, int englishStart, int i) {
-        StringBuilder builder = new StringBuilder();
-        for (int j = englishStart; j < englishStart + i; j++) {
-            builder.append(segmentBuff[j]);
-        }
-        return list.get(builder.toString().toLowerCase());
     }
 }

@@ -97,7 +97,7 @@ public class Dictionary {
 	private Dictionary(Configuration cfg) {
 		this.configuration = cfg;
 		this.props = new Properties();
-		this.conf_dir = cfg.getEnvironment().configFile().resolve(BioPlugin.PLUGIN_NAME);
+		this.conf_dir = Path.of("config");
 		Path configFile = conf_dir.resolve(FILE_NAME);
 
 		InputStream input = null;
