@@ -49,3 +49,24 @@ GET _analyze
 }
 ```
 
+返回结果
+```json
+{
+  "tokens": [
+    {
+      "token": "maternal hypotension",
+      "start_offset": 0,
+      "end_offset": 20,
+      "type": "disease",
+      "position": 0
+    },
+    {
+      "token": "di",
+      "start_offset": 24,
+      "end_offset": 26,
+      "type": "ENGLISH",
+      "position": 1
+    }
+  ]
+}
+```
