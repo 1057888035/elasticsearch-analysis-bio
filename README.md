@@ -27,7 +27,7 @@ CREATE TABLE `bio_dictionary` (
 maven clean package
 # 打包后生成 elasticsearch-analysis-bio-8.9.0.zip 文件
 elasticsearch-analysis-bio-8.9.0.zip
-# 将文件放到pPlugin/bio目录下后解压
+# 将文件放到plugin/bio目录下后解压
 cp  elasticsearch-analysis-bio-8.9.0.zip /{es_home}/plugin/bio
 unzip elasticsearch-analysis-bio-8.9.0.zip
 # 为Elasticsearch的环境设置环境变量
