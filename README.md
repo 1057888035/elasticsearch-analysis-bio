@@ -61,7 +61,7 @@ GET _analyze
       "position": 0
     },
     {
-      "token": "di",
+      "token": "disease",
       "start_offset": 24,
       "end_offset": 26,
       "type": "ENGLISH",
