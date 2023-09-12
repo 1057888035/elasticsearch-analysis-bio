@@ -3,7 +3,7 @@
 
 ## 2.改造内容:
 
-* 对 LetterSegmenter 进行修改。
+* 对 <LetterSegmenter>进行修改。
 * 一个单词如果在库中有匹配的片段则拼接下一个单词，直到拼接后的词等于数据库中的词。
 * 如果到最后发现该组合词在数据库中不存在，则进行回退。
 * 如果组合词在数据库中存在，则返回该类型
@@ -27,7 +27,7 @@ CREATE TABLE `bio_dictionary` (
 maven clean package
 # 打包后生成 elasticsearch-analysis-bio-8.9.0.zip 文件
 elasticsearch-analysis-bio-8.9.0.zip
-# 将文件放到plugin/bio目录下后解压
+# 将文件放到pPlugin/bio目录下后解压
 cp  elasticsearch-analysis-bio-8.9.0.zip /{es_home}/plugin/bio
 unzip elasticsearch-analysis-bio-8.9.0.zip
 # 为Elasticsearch的环境设置环境变量
@@ -45,28 +45,7 @@ GET _analyze
 {
     "analyzer":"bio_smart",
     //"tokenizer":"bio_word",
-   "text": "Maternal Hypotension is di"
+   "text": "Maternal Hypotension is disease test"
 }
 ```
 
-返回结果
-```json
-{
-  "tokens": [
-    {
-      "token": "maternal hypotension",
-      "start_offset": 0,
-      "end_offset": 20,
-      "type": "disease",
-      "position": 0
-    },
-    {
-      "token": "di",
-      "start_offset": 24,
-      "end_offset": 26,
-      "type": "ENGLISH",
-      "position": 1
-    }
-  ]
-}
-```
