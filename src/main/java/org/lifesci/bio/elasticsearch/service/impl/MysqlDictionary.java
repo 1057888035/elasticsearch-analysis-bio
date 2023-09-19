@@ -59,4 +59,8 @@ public class MysqlDictionary extends BaseDictionary implements DictionaryService
             return true;
         });
     }
+
+    public Map getList() {
+        return list;
+    }
 }

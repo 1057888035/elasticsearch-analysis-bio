@@ -196,7 +196,13 @@ class LetterSegmenter implements ISegmenter {
 		boolean needLock = false;
 
 		if (this.englishStart == -1) {//当前的分词器尚未开始处理英文字符
-			if (CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType()) {
+			if (
+					CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType() ||
+					CharacterUtil.CHAR_ARABIC == context.getCurrentCharType() ||
+					CharacterUtil.CHAR_ARABIC == context.getCurrentCharType() ||
+					context.getSegmentBuff()[context.getCursor()] == 40 ||
+					context.getSegmentBuff()[context.getCursor()] == 41
+			) {
 				//记录起始指针的位置,标明分词器进入处理状态
 				this.englishStart = context.getCursor();
 				this.englishEnd = this.englishStart;
@@ -204,10 +210,7 @@ class LetterSegmenter implements ISegmenter {
 		} else {//当前的分词器正在处理英文字符
 			char c = context.getSegmentBuff()[context.getCursor()];
 			if (
-					CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType() ||
-					CharacterUtil.CHAR_ARABIC == context.getCurrentCharType() ||
-					CharacterUtil.CHAR_ARABIC == context.getCurrentCharType() ||
-					c == 39
+					CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType() || c != 32
 			) {
 				//记录当前指针位置为结束位置
 				this.englishEnd = context.getCursor();
@@ -224,6 +227,18 @@ class LetterSegmenter implements ISegmenter {
 				}else if (!dictionaryService.isLike(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1)) {
 					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
 					context.addLexeme(newLexeme);
+					if (hit.size() > 0) {
+						newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
+						context.addLexeme(newLexeme);
+						englishStart = englishStart + hit.get(0);
+						for (int i = 1; i < hit.size(); i++) {
+							if (hit.get(i) - hit.get(i - 1) > 0) {
+								newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
+								context.addLexeme(newLexeme);
+							}
+							englishStart = englishStart + hit.get(i) - hit.get(i-1) + 1;
+						}
+					}
 					this.englishStart = -1;
 					this.englishEnd = -1;
 					this.hit = new ArrayList<>();
@@ -254,6 +269,10 @@ class LetterSegmenter implements ISegmenter {
 					englishStart = englishStart + hit.get(i) - hit.get(i-1) + 1;
 				}
 				if (hit.size() > 1) {
+					newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, this.englishEnd - this.englishStart, Lexeme.TYPE_ENGLISH);
+					context.addLexeme(newLexeme);
+				}
+				if (englishEnd - englishStart > 1) {
 					newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, this.englishEnd - this.englishStart, Lexeme.TYPE_ENGLISH);
 					context.addLexeme(newLexeme);
 				}
