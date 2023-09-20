@@ -225,6 +225,7 @@ class LetterSegmenter implements ISegmenter {
 					this.englishEnd = -1;
 					this.hit = new ArrayList<>();
 				}else if (!dictionaryService.isLike(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1)) {
+					// don`t like db print english token
 					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
 					context.addLexeme(newLexeme);
 					if (hit.size() > 0) {
@@ -266,7 +267,7 @@ class LetterSegmenter implements ISegmenter {
 						newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
 						context.addLexeme(newLexeme);
 					}
-					englishStart = englishStart + hit.get(i) - hit.get(i-1) + 1;
+					englishStart = englishStart + hit.get(i) - hit.get(i-1);
 				}
 				if (hit.size() > 1) {
 					newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, this.englishEnd - this.englishStart, Lexeme.TYPE_ENGLISH);

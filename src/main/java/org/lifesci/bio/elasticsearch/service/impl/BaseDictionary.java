@@ -44,8 +44,14 @@ public class BaseDictionary implements DictionaryService {
         if (StringUtils.isNullOrEmpty(s)) {
             // 特殊情况处理
             // 包含带有‘s的数据分词
-            return list.get(lowerCase.replaceAll("'s",""));
+            s = list.get(lowerCase.replaceAll("'s", ""));
         }
+        if (StringUtils.isNullOrEmpty(s)) {
+            // 特殊情况处理
+            // 最后一个词是特殊字符的数据分词
+            s = list.get(lowerCase.replaceFirst(".$", ""));
+        }
+
         return s;
     }
 }

@@ -13,7 +13,7 @@ public class BioAnalyzerTest {
     @Test
     public void testAnalyzer() throws Exception {
         BioAnalyzer analyzer = new BioAnalyzer();
-        StringReader reader = new StringReader("chemical and bacterial synthesis");
+        StringReader reader = new StringReader("autoanemiasomal dominant sideroblastic is testvvvvv");
         TokenStream ts = analyzer.tokenStream("", reader);
         CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
         ts.reset();
