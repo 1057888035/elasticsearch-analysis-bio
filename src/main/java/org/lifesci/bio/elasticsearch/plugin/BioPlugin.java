@@ -8,6 +8,7 @@ import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -21,7 +22,10 @@ public class BioPlugin extends Plugin implements AnalysisPlugin {
 
     @Override
     public Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> getTokenizers() {
-        return Collections.singletonMap("bio_word", BioTokenizerFactory::new);
+        Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> extra = new HashMap<>();
+        extra.put("bio_word", BioTokenizerFactory::new);
+        extra.put("bio_only_word", BioTokenizerFactory::getBioOnlyTokenizerFactory);
+        return extra;
     }
 
 

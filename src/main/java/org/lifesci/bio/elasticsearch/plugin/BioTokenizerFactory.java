@@ -16,6 +16,15 @@ public class BioTokenizerFactory extends AbstractTokenizerFactory {
         this.configuration=new Configuration(environment,settings).setUseSmart(true);
     }
 
+    public BioTokenizerFactory setBioOnly() {
+        this.configuration.setBioOnly(true);
+        return this;
+    }
+
+    public static   BioTokenizerFactory getBioOnlyTokenizerFactory(IndexSettings indexSettings, Environment environment, String s, Settings settings) {
+        return new BioTokenizerFactory(indexSettings, environment, s, settings).setBioOnly();
+    }
+
     @Override
     public Tokenizer create() {
         return new BioTokenizer(configuration);

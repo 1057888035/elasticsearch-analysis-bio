@@ -30,7 +30,31 @@ public class BaseDictionary implements DictionaryService {
             builder.append(segmentBuff[j]);
         }
         String lowerCase = builder.toString().toLowerCase();
-        return filter.mightContain(builder.toString().toLowerCase()) || filter.mightContain(lowerCase.replaceAll("'s",""));
+        if (lowerCase.isEmpty()) {
+            return false;
+        }
+        boolean b = filter.mightContain(lowerCase) || filter.mightContain(lowerCase.replaceAll("'s", ""));
+        if (!b) {
+            // 特殊情况处理
+            // 最后一个字符是特殊字符
+            byte[] bytes = lowerCase.getBytes();
+            byte aByte = bytes[bytes.length - 1];
+            switch (String.valueOf((char)aByte)) {
+                case "s":
+                case ".":
+                case ",":
+                    StringBuilder sb = new StringBuilder();
+                    for (int i1 = 0; i1 < bytes.length - 1; i1++) {
+                        sb.append((char) bytes[i1]);
+                    }
+                    b = filter.mightContain((sb.toString()));
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        return b;
     }
 
     @Override
@@ -40,6 +64,9 @@ public class BaseDictionary implements DictionaryService {
             builder.append(segmentBuff[j]);
         }
         String lowerCase = builder.toString().toLowerCase();
+        if (lowerCase.isEmpty()) {
+            return null;
+        }
         String s = list.get(lowerCase);
         if (StringUtils.isNullOrEmpty(s)) {
             // 特殊情况处理
@@ -48,10 +75,24 @@ public class BaseDictionary implements DictionaryService {
         }
         if (StringUtils.isNullOrEmpty(s)) {
             // 特殊情况处理
-            // 最后一个词是特殊字符的数据分词
-            s = list.get(lowerCase.replaceFirst(".$", ""));
-        }
+            // 最后一个字符是特殊字符
+            byte[] bytes = lowerCase.getBytes();
+            byte aByte = bytes[bytes.length - 1];
+            switch (String.valueOf((char)aByte)) {
+                case "s":
+                case ".":
+                case ",":
+                    StringBuilder sb = new StringBuilder();
+                    for (int i1 = 0; i1 < bytes.length - 1; i1++) {
+                        sb.append((char) bytes[i1]);
+                    }
+                    s = list.get(sb.toString());
+                    break;
+                default:
+                    break;
+            }
 
+        }
         return s;
     }
 }

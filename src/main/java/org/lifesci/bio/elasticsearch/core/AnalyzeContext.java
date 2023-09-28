@@ -389,5 +389,9 @@ class AnalyzeContext {
 
 		}
 	}
+
+	public boolean isBioOnly() {
+		return this.cfg.isBioOnly();
+	}
 	
 }

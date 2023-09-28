@@ -84,6 +84,8 @@ class LetterSegmenter implements ISegmenter {
 
 	private List<Integer> hit = new ArrayList<>();
 
+	private Lexeme readyLexeme = null;
+
 	LetterSegmenter() {
 		Arrays.sort(Letter_Connector);
 		Arrays.sort(Num_Connector);
@@ -102,11 +104,11 @@ class LetterSegmenter implements ISegmenter {
 	public void analyze(AnalyzeContext context) {
 		boolean bufferLockFlag = false;
 		//处理英文字母
-		bufferLockFlag = this.processEnglishLetter(context) || bufferLockFlag;
-		//处理阿拉伯字母
-	//	bufferLockFlag = this.processArabicLetter(context) || bufferLockFlag;
-		//处理混合字母(这个要放最后处理，可以通过QuickSortSet排除重复)
-	//	bufferLockFlag = this.processMixLetter(context) || bufferLockFlag;
+		if (!context.isBioOnly()) {
+			bufferLockFlag = this.processEnglishLetter(context) || bufferLockFlag;
+		}else {
+			bufferLockFlag = this.processBioOnlyLetter(context) || bufferLockFlag;
+		}
 
 		//判断是否锁定缓冲区
 		if (bufferLockFlag) {
@@ -130,65 +132,7 @@ class LetterSegmenter implements ISegmenter {
 	}
 
 	/**
-	 * 处理数字字母混合输出
-	 * 如：windos2000 | linliangyi2005@gmail.com
-	 * //	 * @param input
-	 *
-	 * @param context
-	 * @return
-	 */
-	private boolean processMixLetter(AnalyzeContext context) {
-		boolean needLock = false;
-
-		if (this.start == -1) {//当前的分词器尚未开始处理字符
-			if (CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()
-					|| CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType()) {
-				//记录起始指针的位置,标明分词器进入处理状态
-				this.start = context.getCursor();
-				this.end = start;
-			}
-
-		} else {//当前的分词器正在处理字符
-			if (CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()
-					|| CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType()) {
-				//记录下可能的结束位置
-				this.end = context.getCursor();
-
-			} else if (CharacterUtil.CHAR_USELESS == context.getCurrentCharType()
-					&& this.isLetterConnector(context.getCurrentChar())) {
-				//记录下可能的结束位置
-				this.end = context.getCursor();
-			} else {
-				//遇到非Letter字符，输出词元
-				Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.start, this.end - this.start + 1, Lexeme.TYPE_LETTER);
-				context.addLexeme(newLexeme);
-				this.start = -1;
-				this.end = -1;
-			}
-		}
-
-		//判断缓冲区是否已经读完
-		if (context.isBufferConsumed() && (this.start != -1 && this.end != -1)) {
-			//缓冲以读完，输出词元
-			Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.start, this.end - this.start + 1, Lexeme.TYPE_LETTER);
-			context.addLexeme(newLexeme);
-			this.start = -1;
-			this.end = -1;
-		}
-
-		//判断是否锁定缓冲区
-		if (this.start == -1 && this.end == -1) {
-			//对缓冲区解锁
-			needLock = false;
-		} else {
-			needLock = true;
-		}
-		return needLock;
-	}
-
-	/**
-	 * 处理纯英文字母输出
-	 *
+	 * 处理纯字母输出
 	 * @param context
 	 * @return
 	 */
@@ -299,47 +243,75 @@ class LetterSegmenter implements ISegmenter {
 	}
 
 	/**
-	 * 处理阿拉伯数字输出
-	 *
+	 * 只保留字典字母
 	 * @param context
 	 * @return
 	 */
-	private boolean processArabicLetter(AnalyzeContext context) {
+	private boolean processBioOnlyLetter(AnalyzeContext context) {
 		boolean needLock = false;
-
-		if (this.arabicStart == -1) {//当前的分词器尚未开始处理数字字符
-			if (CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()) {
+		if (this.englishStart == -1) {//当前的分词器尚未开始处理英文字符
+			if (
+					CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType() ||
+							CharacterUtil.CHAR_ARABIC == context.getCurrentCharType() ||
+							context.getSegmentBuff()[context.getCursor()] == 40 ||
+							context.getSegmentBuff()[context.getCursor()] == 41
+			) {
 				//记录起始指针的位置,标明分词器进入处理状态
-				this.arabicStart = context.getCursor();
-				this.arabicEnd = this.arabicStart;
+				this.englishStart = context.getCursor();
+				this.englishEnd = this.englishStart;
 			}
-		} else {//当前的分词器正在处理数字字符
-			if (CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()) {
+		} else {//当前的分词器正在处理英文字符
+			char c = context.getSegmentBuff()[context.getCursor()];
+			if (c != 32) {
 				//记录当前指针位置为结束位置
-				this.arabicEnd = context.getCursor();
-			} else if (CharacterUtil.CHAR_USELESS == context.getCurrentCharType()
-					&& this.isNumConnector(context.getCurrentChar())) {
-				//不输出数字，但不标记结束
+				this.englishEnd = context.getCursor();
 			} else {
-				////遇到非Arabic字符,输出词元
-				Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.arabicStart, this.arabicEnd - this.arabicStart + 1, Lexeme.TYPE_ARABIC);
-				context.addLexeme(newLexeme);
-				this.arabicStart = -1;
-				this.arabicEnd = -1;
+				this.hit.add(this.englishEnd - this.englishStart + 1);
+				String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
+				if (!StringUtils.isNullOrEmpty(type)) {
+					//遇到非English字符,标记此Lexeme
+					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
+					readyLexeme = newLexeme;
+				}
+				if (!dictionaryService.isLike(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1) && !hit.isEmpty()) {
+					if (null != readyLexeme) {
+						context.addLexeme(readyLexeme);
+						this.englishStart = -1;
+						this.englishEnd = -1;
+						this.hit = new ArrayList<>();
+						this.englishStart = this.englishStart + readyLexeme.getLength();
+						readyLexeme = null;
+					} else {
+						this.englishStart = this.englishStart + hit.get(0) + 1;
+						if (this.hit.size() > 1) {
+							Integer hit2 = this.hit.get(1) - this.hit.get(0) - 1;
+							this.hit = new ArrayList<>();
+							hit.add(hit2);
+						} else {
+							this.hit = new ArrayList<>();
+						}
+
+					}
+				}
 			}
 		}
 
-		//判断缓冲区是否已经读完
-		if (context.isBufferConsumed() && (this.arabicStart != -1 && this.arabicEnd != -1)) {
-			//生成已切分的词元
-			Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.arabicStart, this.arabicEnd - this.arabicStart + 1, Lexeme.TYPE_ARABIC);
-			context.addLexeme(newLexeme);
-			this.arabicStart = -1;
-			this.arabicEnd = -1;
+		if (context.isBufferConsumed() && (this.englishStart != -1 && this.englishEnd != -1)) {
+			String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
+			if (!StringUtils.isNullOrEmpty(type)) {
+				Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
+				this.englishStart = -1;
+				this.englishEnd = -1;
+				context.addLexeme(newLexeme);
+			}
+			if (null != readyLexeme) {
+				context.addLexeme(readyLexeme);
+			}
 		}
+
 
 		//判断是否锁定缓冲区
-		if (this.arabicStart == -1 && this.arabicEnd == -1) {
+		if (this.englishStart == -1 && this.englishEnd == -1) {
 			//对缓冲区解锁
 			needLock = false;
 		} else {
@@ -359,19 +331,4 @@ class LetterSegmenter implements ISegmenter {
 		return index >= 0;
 	}
 
-	/**
-	 * 判断是否是数字连接符号
-	 *
-	 * @param input
-	 * @return
-	 */
-	private boolean isNumConnector(char input) {
-		int index = Arrays.binarySearch(Num_Connector, input);
-		return index >= 0;
-	}
-
-	private boolean isSp(char input) {
-		int index = Arrays.binarySearch(PUNCTION , input);
-		return index >= 0;
-	}
 }

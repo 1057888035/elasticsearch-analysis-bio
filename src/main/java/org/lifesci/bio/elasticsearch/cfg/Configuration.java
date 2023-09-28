@@ -27,6 +27,8 @@ public class Configuration {
 	//是否启用小写处理
 	private boolean enableLowercase=true;
 
+	private boolean isBioOnly;
+
 
 	public Configuration(boolean use_smart, boolean enable_lowercase, boolean enable_remote_dict){
 		this.useSmart = use_smart;
@@ -78,5 +80,14 @@ public class Configuration {
 
 	public boolean isEnableLowercase() {
 		return enableLowercase;
+	}
+
+
+	public boolean isBioOnly() {
+		return isBioOnly;
+	}
+
+	public void setBioOnly(boolean bioOnly) {
+		isBioOnly = bioOnly;
 	}
 }
