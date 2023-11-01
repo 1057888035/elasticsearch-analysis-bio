@@ -49,6 +49,8 @@ public class Lexeme implements Comparable<Lexeme>{
 	public static final int TYPE_COUNT = 32;
 	//中文数量词
 	public static final int TYPE_CQUAN = 48;
+
+	public static final int TYPE_ALIAS = 128;
 	
 	//词元的起始位移
 	private int offset;
@@ -253,6 +255,10 @@ public class Lexeme implements Comparable<Lexeme>{
 			
 		case TYPE_CQUAN:	
 			return "TYPE_CQUAN";
+
+		case TYPE_ALIAS:
+			return "SYNONYM";
+
 			
 		default :
 			return "UNKONW";
@@ -282,6 +288,10 @@ public class Lexeme implements Comparable<Lexeme>{
 
 	public String getTypeString() {
 		return typeString;
+	}
+
+	public void setTypeString(String string) {
+		this.typeString = string;
 	}
 
 	/**

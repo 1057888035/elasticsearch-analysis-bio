@@ -2,6 +2,7 @@ package org.lifesci.bio.elasticsearch.service.impl;
 
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
+import com.mysql.cj.util.StringUtils;
 import org.elasticsearch.SpecialPermission;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
@@ -42,6 +43,7 @@ public class MysqlDictionary extends BaseDictionary implements DictionaryService
                     String name = resultSet.getString(1);
                     String type = resultSet.getString(2);
                     list.put(name.toLowerCase(Locale.ROOT), type);
+                    noCauseList.put(name.toLowerCase(Locale.ROOT), stringIsUp(name));
                     String[] split = name.toLowerCase(Locale.ROOT).split(" ", -1);
                     for (int i = 0; i < split.length; i++) {
                         StringBuilder builder = new StringBuilder();

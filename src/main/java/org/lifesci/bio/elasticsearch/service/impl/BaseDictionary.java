@@ -6,7 +6,9 @@ import com.mysql.cj.util.StringUtils;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BaseDictionary implements DictionaryService {
@@ -21,6 +23,8 @@ public class BaseDictionary implements DictionaryService {
      * 完全匹配，获取类型
      */
     protected Map<String, String> list = new HashMap<>();
+
+    protected Map<String, Boolean> noCauseList = new HashMap<>();
 
 
     @Override
@@ -59,19 +63,30 @@ public class BaseDictionary implements DictionaryService {
 
     @Override
     public String isMe(char[] segmentBuff, int englishStart, int i) {
+        Boolean isAllUp = false;
         StringBuilder builder = new StringBuilder();
         for (int j = englishStart; j < englishStart + i; j++) {
             builder.append(segmentBuff[j]);
         }
+        // 字节构建成小写字母
         String lowerCase = builder.toString().toLowerCase();
         if (lowerCase.isEmpty()) {
             return null;
         }
         String s = list.get(lowerCase);
+        if (!StringUtils.isNullOrEmpty(s)) {
+            isAllUp = noCauseList.get(lowerCase);
+            s += ":::0";
+        }
         if (StringUtils.isNullOrEmpty(s)) {
             // 特殊情况处理
             // 包含带有‘s的数据分词
             s = list.get(lowerCase.replaceAll("'s", ""));
+            isAllUp = noCauseList.get(lowerCase.replaceAll("'s", ""));
+            if (!StringUtils.isNullOrEmpty(s)) {
+                s = s + ":::2";
+                builder.deleteCharAt(builder.length()-1).deleteCharAt(builder.length()-1);
+            }
         }
         if (StringUtils.isNullOrEmpty(s)) {
             // 特殊情况处理
@@ -82,17 +97,60 @@ public class BaseDictionary implements DictionaryService {
                 case "s":
                 case ".":
                 case ",":
+                    builder.deleteCharAt(builder.length() - 1);
                     StringBuilder sb = new StringBuilder();
                     for (int i1 = 0; i1 < bytes.length - 1; i1++) {
                         sb.append((char) bytes[i1]);
                     }
+                    isAllUp = noCauseList.get(sb.toString());
                     s = list.get(sb.toString());
+                    if (!StringUtils.isNullOrEmpty(s)) {
+                        s = s + ":::1";
+                    }
                     break;
                 default:
                     break;
             }
 
         }
+        // 判断缩写
+        if (!StringUtils.isNullOrEmpty(s)) {
+            if (null != isAllUp && isAllUp && !stringIsUp(builder.toString())) {
+                return null;
+            }
+        }
         return s;
+    }
+
+    /**
+     * 根据名称获取别名
+     * @param name
+     * @return
+     */
+    @Override
+    public List<String> getAlias(String name) {
+        // TODO
+        List<String> objects = new ArrayList<>();
+        if (name.equals("tetanus")) {
+            objects.add("tetanus2");
+        }
+        if (name.equals("tetanus2")) {
+            objects.add("tetanus");
+        }
+        return objects;
+    }
+
+    /**
+     * 判断字符串是纯大写
+     * @param text
+     * @return
+     */
+    protected boolean stringIsUp(String text) {
+        for (byte aByte : text.getBytes()) {
+            if (!Character.isUpperCase(aByte)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

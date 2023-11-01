@@ -103,13 +103,7 @@ class LetterSegmenter implements ISegmenter {
 	 */
 	public void analyze(AnalyzeContext context) {
 		boolean bufferLockFlag = false;
-		//处理英文字母
-		if (!context.isBioOnly()) {
-			bufferLockFlag = this.processEnglishLetter(context) || bufferLockFlag;
-		}else {
-			bufferLockFlag = this.processBioOnlyLetter(context) || bufferLockFlag;
-		}
-
+		bufferLockFlag = this.processEnglishLetter(context) || bufferLockFlag;
 		//判断是否锁定缓冲区
 		if (bufferLockFlag) {
 			context.lockBuffer(SEGMENTER_NAME);
@@ -162,26 +156,34 @@ class LetterSegmenter implements ISegmenter {
 				this.hit.add(this.englishEnd - this.englishStart + 1);
 				String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
 				if (!StringUtils.isNullOrEmpty(type)) {
-					//遇到非English字符,并且该单词在字典中，输出词元
-					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
-					context.addLexeme(newLexeme);
-					this.englishStart = -1;
-					this.englishEnd = -1;
-					this.hit = new ArrayList<>();
+					//遇到非English字符,标记此Lexeme
+					String[] typeSplit = type.split(":::");
+					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1 - Integer.valueOf(typeSplit[1]), typeSplit[0]);
+					readyLexeme = newLexeme;
 				}else if (!dictionaryService.isLike(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1)) {
 					// don`t like db print english token
-					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
-					context.addLexeme(newLexeme);
-					if (hit.size() > 0) {
-						newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
+					Lexeme newLexeme = null;
+					if (readyLexeme != null) {
+						context.addLexeme(readyLexeme);
+						readyLexeme = null;
+					}else {
+						newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH)
 						context.addLexeme(newLexeme);
+					}
+					if (hit.size() > 0) {
 						englishStart = englishStart + hit.get(0);
 						for (int i = 1; i < hit.size(); i++) {
 							if (hit.get(i) - hit.get(i - 1) > 0) {
-								newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
+								String tempType = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1);
+								if (null != tempType) {
+									String[] typeSplit = tempType.split(":::");
+									newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1 - Integer.valueOf(typeSplit[1]), typeSplit[0]);
+								} else {
+									newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
+								}
 								context.addLexeme(newLexeme);
 							}
-							englishStart = englishStart + hit.get(i) - hit.get(i-1) + 1;
+							englishStart = englishStart + hit.get(i) - hit.get(i-1);
 						}
 					}
 					this.englishStart = -1;
@@ -198,11 +200,16 @@ class LetterSegmenter implements ISegmenter {
 			String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
 			Lexeme newLexeme = null;
 			if (!StringUtils.isNullOrEmpty(type)) {
-				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
+				String[] typeSplit = type.split(":::");
+				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1 - Integer.valueOf(typeSplit[1]), typeSplit[0]);
 				this.englishStart = -1;
 				this.englishEnd = -1;
 				context.addLexeme(newLexeme);
 			} else if (hit.size() > 0) {
+				if (readyLexeme != null) {
+					context.addLexeme(readyLexeme);
+					readyLexeme = null;
+				}
 				newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
 				context.addLexeme(newLexeme);
 				englishStart = englishStart + hit.get(0);
@@ -242,11 +249,11 @@ class LetterSegmenter implements ISegmenter {
 		return needLock;
 	}
 
-	/**
+/*	*//**
 	 * 只保留字典字母
 	 * @param context
 	 * @return
-	 */
+	 *//*
 	private boolean processBioOnlyLetter(AnalyzeContext context) {
 		boolean needLock = false;
 		if (this.englishStart == -1) {//当前的分词器尚未开始处理英文字符
@@ -270,7 +277,8 @@ class LetterSegmenter implements ISegmenter {
 				String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
 				if (!StringUtils.isNullOrEmpty(type)) {
 					//遇到非English字符,标记此Lexeme
-					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
+					String[] typeSplit = type.split(":::");
+					Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1 - Integer.valueOf(typeSplit[1]), typeSplit[0]);
 					readyLexeme = newLexeme;
 				}
 				if (!dictionaryService.isLike(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1) && !hit.isEmpty()) {
@@ -279,27 +287,45 @@ class LetterSegmenter implements ISegmenter {
 						this.englishStart = -1;
 						this.englishEnd = -1;
 						this.hit = new ArrayList<>();
-						this.englishStart = this.englishStart + readyLexeme.getLength();
 						readyLexeme = null;
 					} else {
-						this.englishStart = this.englishStart + hit.get(0) + 1;
-						if (this.hit.size() > 1) {
-							Integer hit2 = this.hit.get(1) - this.hit.get(0) - 1;
-							this.hit = new ArrayList<>();
-							hit.add(hit2);
+						if (hit.size() > 1) {
+							Integer endStart = this.englishEnd - (hit.get(hit.size() - 1) - hit.get(hit.size() - 2) - 1) + 1;
+							String tempType = dictionaryService.isMe(context.getSegmentBuff(), endStart, this.englishEnd - endStart + 1);
+							if (!StringUtils.isNullOrEmpty(tempType)) {
+								String[] typeSplit = tempType.split(":::");
+								Lexeme newLexeme = new Lexeme(context.getBufferOffset(), endStart, this.englishEnd - endStart + 1 - Integer.valueOf(typeSplit[1]), typeSplit[0]);
+								context.addLexeme(newLexeme);
+								this.englishStart = -1;
+								this.englishEnd = -1;
+								this.hit = new ArrayList<>();
+							} else if (dictionaryService.isLike(context.getSegmentBuff(), endStart, this.englishEnd - endStart + 1)) {
+								this.englishStart = endStart;
+								this.hit = new ArrayList<>();
+								this.hit.add(this.englishEnd - endStart + 1);
+							} else {
+								this.englishStart = -1;
+								this.englishEnd = -1;
+								this.hit = new ArrayList<>();
+							}
 						} else {
+							this.englishStart = -1;
+							this.englishEnd = -1;
 							this.hit = new ArrayList<>();
 						}
-
 					}
 				}
 			}
 		}
 
+		*//**
+		 * 缓冲区读完了
+		 *//*
 		if (context.isBufferConsumed() && (this.englishStart != -1 && this.englishEnd != -1)) {
 			String type = dictionaryService.isMe(context.getSegmentBuff(), this.englishStart, this.englishEnd - this.englishStart + 1);
 			if (!StringUtils.isNullOrEmpty(type)) {
-				Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1, type);
+				String[] typeSplit = type.split(":::");
+				Lexeme newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, this.englishEnd - this.englishStart + 1 - Integer.valueOf(typeSplit[1]), typeSplit[0]);
 				this.englishStart = -1;
 				this.englishEnd = -1;
 				context.addLexeme(newLexeme);
@@ -318,17 +344,6 @@ class LetterSegmenter implements ISegmenter {
 			needLock = true;
 		}
 		return needLock;
-	}
-
-	/**
-	 * 判断是否是字母连接符号
-	 *
-	 * @param input
-	 * @return
-	 */
-	private boolean isLetterConnector(char input) {
-		int index = Arrays.binarySearch(Letter_Connector, input);
-		return index >= 0;
-	}
+	}*/
 
 }

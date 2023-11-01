@@ -25,12 +25,16 @@
 package org.lifesci.bio.elasticsearch.core;
 
 
+import org.lifesci.bio.elasticsearch.beanFactory.BioBeanFactory;
 import org.lifesci.bio.elasticsearch.cfg.Configuration;
 import org.lifesci.bio.elasticsearch.dic.Dictionary;
+import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
+
+import static org.lifesci.bio.elasticsearch.core.Lexeme.TYPE_ALIAS;
 
 /**
  * 
@@ -72,6 +76,11 @@ class AnalyzeContext {
     private LinkedList<Lexeme> results;
 	//分词器配置项
 	private Configuration cfg;
+
+	// 已存在的别名
+	Set<String> readyNames = new HashSet<>();
+
+	private DictionaryService dictionaryService = BioBeanFactory.getDictionaryBean();
 
     public AnalyzeContext(Configuration configuration){
         this.cfg = configuration;
@@ -324,8 +333,21 @@ class AnalyzeContext {
     			result = this.results.pollFirst(); 				
     		}else{
 	 			//不是停止词, 生成lexeme的词元文本,输出
-	    		result.setLexemeText(String.valueOf(segmentBuff , result.getBegin() , result.getLength()));
-	    		break;
+				String name = String.valueOf(segmentBuff, result.getBegin(), result.getLength());
+				if (!result.getLexemeTypeString().equals("SYNONYM")) {
+					result.setLexemeText(name);
+				}
+				List<String> alias = dictionaryService.getAlias(name);
+				readyNames.add(name);
+				for (String as : alias) {
+					if (readyNames.add(as)) {
+						Lexeme clone =  new Lexeme(result.getOffset(),result.getBegin(),result.getLength(),"SYNONYM");
+						clone.setLexemeText(as);
+						clone.setLexemeType(TYPE_ALIAS);
+						this.results.add(clone);
+					}
+				}
+				break;
     		}
 		}
 		return result;
