@@ -14,7 +14,7 @@ public class BioAnalyzerTest {
     public void testAnalyzer() throws Exception {
         BioAnalyzer analyzer = new BioAnalyzer();
         StringReader reader = new StringReader("" +
-                "This finding suggests that apo E2 is associated with renal failure in NIDDM. In addition, " +
+                "Large interindividual variation is observed in both the response and toxicity associated with anticancer therapy. The etiology of this variation is multifactorial, but is due in part to host genetic variations. Pharmacogenetic and pharmacogenomic studies have successfully identified genetic variants that contribute to this variation in susceptibility to chemotherapy. This review provides an overview of the progress made in the field of pharmacogenetics and pharmacogenomics using a five-stage architecture, which includes 1) determining the role of genetics in drug response; 2) screening and identifying genetic markers; 3) validating genetic markers; 4) clinical utility assessment; and 5) pharmacoeconomic impact. Examples are provided to illustrate the identification, validation, utility, and challenges of these pharmacogenetic and pharmacogenomic markers, with the focus on the current application of this knowledge in cancer therapy. With the advance of technology, it becomes feasible to evaluate the human genome in a relatively inexpensive and efficient manner; however, extensive pharmacogenetic research and education are urgently needed to improve the translation of pharmacogenetic concepts from bench to bedside." +
                 "");
         TokenStream ts = analyzer.tokenStream("", reader);
         CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);

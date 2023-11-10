@@ -3,6 +3,7 @@ package org.lifesci.bio.elasticsearch.service.impl;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.mysql.cj.util.StringUtils;
+import org.lifesci.bio.elasticsearch.dic.FilterEntity;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
 import java.nio.charset.Charset;
@@ -22,10 +23,7 @@ public class BaseDictionary implements DictionaryService {
     /**
      * 完全匹配，获取类型
      */
-    protected Map<String, String> list = new HashMap<>();
-
-    protected Map<String, Boolean> noCauseList = new HashMap<>();
-
+    protected Map<String, FilterEntity> list = new HashMap<>();
 
     @Override
     public boolean isLike(char[] segmentBuff, int englishStart, int i) {
@@ -73,27 +71,28 @@ public class BaseDictionary implements DictionaryService {
         if (lowerCase.isEmpty()) {
             return null;
         }
-        String s = list.get(lowerCase);
-        if (!StringUtils.isNullOrEmpty(s)) {
-            isAllUp = noCauseList.get(lowerCase);
-            s += ":::0";
+        FilterEntity filterEntity = list.get(lowerCase);
+        String s = null;
+        if (null != filterEntity) {
+            isAllUp = list.get(lowerCase).getNoCause();
+            s = filterEntity.getType() + ":::0";
         }
         if (StringUtils.isNullOrEmpty(s)) {
             // 特殊情况处理
             // 包含带有‘s的数据分词
-            s = list.get(lowerCase.replaceAll("'s", ""));
-            isAllUp = noCauseList.get(lowerCase.replaceAll("'s", ""));
-            if (!StringUtils.isNullOrEmpty(s)) {
-                s = s + ":::2";
+            filterEntity = list.get(lowerCase.replaceAll("'s", ""));
+            if (null != filterEntity) {
+                isAllUp = filterEntity.getNoCause();
+                s = filterEntity.getType() + ":::2";
                 builder.deleteCharAt(builder.length()-1).deleteCharAt(builder.length()-1);
             }
         }
-        if (StringUtils.isNullOrEmpty(s)) {
+        if (null == filterEntity) {
             // 特殊情况处理
             // 最后一个字符是特殊字符
             byte[] bytes = lowerCase.getBytes();
             byte aByte = bytes[bytes.length - 1];
-            switch (String.valueOf((char)aByte)) {
+            switch (String.valueOf((char) aByte)) {
                 case "s":
                 case ".":
                 case ",":
@@ -102,10 +101,10 @@ public class BaseDictionary implements DictionaryService {
                     for (int i1 = 0; i1 < bytes.length - 1; i1++) {
                         sb.append((char) bytes[i1]);
                     }
-                    isAllUp = noCauseList.get(sb.toString());
-                    s = list.get(sb.toString());
-                    if (!StringUtils.isNullOrEmpty(s)) {
-                        s = s + ":::1";
+                    filterEntity = list.get(sb.toString());
+                    if (null != filterEntity) {
+                        s = filterEntity.getType() + ":::1";
+                        isAllUp = filterEntity.getNoCause();
                     }
                     break;
                 default:
@@ -133,9 +132,13 @@ public class BaseDictionary implements DictionaryService {
         List<String> objects = new ArrayList<>();
         if (name.equals("tetanus")) {
             objects.add("tetanus2");
+            objects.add("tetanus3");
+            objects.add("tetanus4");
+            objects.add("tetanus5");
+            objects.add("tetanus6");
         }
         if (name.equals("tetanus2")) {
-            objects.add("tetanus");
+            objects.add("tetanus6");
         }
         return objects;
     }

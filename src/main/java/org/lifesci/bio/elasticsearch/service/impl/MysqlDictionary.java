@@ -1,17 +1,13 @@
 package org.lifesci.bio.elasticsearch.service.impl;
 
-import com.google.common.hash.BloomFilter;
-import com.google.common.hash.Funnels;
-import com.mysql.cj.util.StringUtils;
 import org.elasticsearch.SpecialPermission;
+import org.lifesci.bio.elasticsearch.dic.FilterEntity;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
-import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.sql.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class MysqlDictionary extends BaseDictionary implements DictionaryService {
 
@@ -42,8 +38,10 @@ public class MysqlDictionary extends BaseDictionary implements DictionaryService
                 while (resultSet.next()) {
                     String name = resultSet.getString(1);
                     String type = resultSet.getString(2);
-                    list.put(name.toLowerCase(Locale.ROOT), type);
-                    noCauseList.put(name.toLowerCase(Locale.ROOT), stringIsUp(name));
+                    FilterEntity filterEntity = new FilterEntity();
+                    filterEntity.setType(type);
+                    filterEntity.setNoCause(stringIsUp(name));
+                    list.put(name.toLowerCase(Locale.ROOT), filterEntity);
                     String[] split = name.toLowerCase(Locale.ROOT).split(" ", -1);
                     for (int i = 0; i < split.length; i++) {
                         StringBuilder builder = new StringBuilder();

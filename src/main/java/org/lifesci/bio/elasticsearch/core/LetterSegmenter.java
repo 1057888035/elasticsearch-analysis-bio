@@ -132,6 +132,7 @@ class LetterSegmenter implements ISegmenter {
 	 */
 	private boolean processEnglishLetter(AnalyzeContext context) {
 		boolean needLock = false;
+		boolean bioOnlyNo = !context.isBioOnly();
 
 		if (this.englishStart == -1) {//当前的分词器尚未开始处理英文字符
 			if (
@@ -166,11 +167,11 @@ class LetterSegmenter implements ISegmenter {
 					if (readyLexeme != null) {
 						context.addLexeme(readyLexeme);
 						readyLexeme = null;
-					}else {
-						newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH)
+					}else if (bioOnlyNo){
+						newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart, hit.get(0), Lexeme.TYPE_ENGLISH);
 						context.addLexeme(newLexeme);
 					}
-					if (hit.size() > 0) {
+					if (hit.size() > 1) {
 						englishStart = englishStart + hit.get(0);
 						for (int i = 1; i < hit.size(); i++) {
 							if (hit.get(i) - hit.get(i - 1) > 0) {
@@ -178,10 +179,11 @@ class LetterSegmenter implements ISegmenter {
 								if (null != tempType) {
 									String[] typeSplit = tempType.split(":::");
 									newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1 - Integer.valueOf(typeSplit[1]), typeSplit[0]);
-								} else {
+									context.addLexeme(newLexeme);
+								} else if (bioOnlyNo) {
 									newLexeme = new Lexeme(context.getBufferOffset(), this.englishStart + 1, hit.get(i) - hit.get(i - 1) - 1, Lexeme.TYPE_ENGLISH);
+									context.addLexeme(newLexeme);
 								}
-								context.addLexeme(newLexeme);
 							}
 							englishStart = englishStart + hit.get(i) - hit.get(i-1);
 						}

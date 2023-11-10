@@ -9,7 +9,7 @@ public class BioAnalyzer extends Analyzer {
 
     public BioAnalyzer() {
         this.configuration = new Configuration(true, false, false);
-        //this.configuration.setBioOnly(true);
+        this.configuration.setBioOnly(true);
     }
 
     public BioAnalyzer(Configuration configuration) {
