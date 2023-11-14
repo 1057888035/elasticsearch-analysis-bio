@@ -4,6 +4,7 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.mysql.cj.util.StringUtils;
 import org.lifesci.bio.elasticsearch.dic.FilterEntity;
+import org.lifesci.bio.elasticsearch.dic.TypeDto;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
 
 import java.nio.charset.Charset;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BaseDictionary implements DictionaryService {
 
@@ -60,7 +63,7 @@ public class BaseDictionary implements DictionaryService {
     }
 
     @Override
-    public String isMe(char[] segmentBuff, int englishStart, int i) {
+    public TypeDto isMe(char[] segmentBuff, int englishStart, int i) {
         Boolean isAllUp = false;
         StringBuilder builder = new StringBuilder();
         for (int j = englishStart; j < englishStart + i; j++) {
@@ -72,19 +75,19 @@ public class BaseDictionary implements DictionaryService {
             return null;
         }
         FilterEntity filterEntity = list.get(lowerCase);
-        String s = null;
+        TypeDto s = null;
         if (null != filterEntity) {
             isAllUp = list.get(lowerCase).getNoCause();
-            s = filterEntity.getType() + ":::0";
+            s = new TypeDto(englishStart, i, filterEntity.getType());
         }
-        if (StringUtils.isNullOrEmpty(s)) {
+        if (null == s) {
             // 特殊情况处理
             // 包含带有‘s的数据分词
             filterEntity = list.get(lowerCase.replaceAll("'s", ""));
             if (null != filterEntity) {
                 isAllUp = filterEntity.getNoCause();
-                s = filterEntity.getType() + ":::2";
-                builder.deleteCharAt(builder.length()-1).deleteCharAt(builder.length()-1);
+                s = new TypeDto(englishStart, i - 2, filterEntity.getType());
+                builder.deleteCharAt(builder.length() - 1).deleteCharAt(builder.length() - 1);
             }
         }
         if (null == filterEntity) {
@@ -103,7 +106,7 @@ public class BaseDictionary implements DictionaryService {
                     }
                     filterEntity = list.get(sb.toString());
                     if (null != filterEntity) {
-                        s = filterEntity.getType() + ":::1";
+                        s = new TypeDto(englishStart, i - 1, filterEntity.getType());
                         isAllUp = filterEntity.getNoCause();
                     }
                     break;
@@ -112,8 +115,17 @@ public class BaseDictionary implements DictionaryService {
             }
 
         }
+        // 筛选括号内的字典值 ， ps: 暂时只能判断单个词内括号内容，如有含空格的括号判断还需重构
+        if (null == filterEntity && lowerCase.startsWith("(") && lowerCase.endsWith(")")) {
+            filterEntity = list.get(lowerCase.replaceAll("[\\(\\)]", ""));
+            if (null != filterEntity) {
+                s = new TypeDto(englishStart + 1, i - 2, filterEntity.getType());
+                isAllUp = filterEntity.getNoCause();
+            }
+        }
+
         // 判断缩写
-        if (!StringUtils.isNullOrEmpty(s)) {
+        if (null != s) {
             if (null != isAllUp && isAllUp && !stringIsUp(builder.toString())) {
                 return null;
             }
