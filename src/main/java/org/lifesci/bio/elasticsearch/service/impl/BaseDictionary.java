@@ -2,7 +2,6 @@ package org.lifesci.bio.elasticsearch.service.impl;
 
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
-import com.mysql.cj.util.StringUtils;
 import org.lifesci.bio.elasticsearch.dic.FilterEntity;
 import org.lifesci.bio.elasticsearch.dic.TypeDto;
 import org.lifesci.bio.elasticsearch.service.DictionaryService;
@@ -12,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BaseDictionary implements DictionaryService {
 
@@ -121,11 +118,31 @@ public class BaseDictionary implements DictionaryService {
             if (null != filterEntity) {
                 s = new TypeDto(englishStart + 1, i - 2, filterEntity.getType());
                 isAllUp = filterEntity.getNoCause();
+                // 去除括号
+                builder.deleteCharAt(0);
+                builder.deleteCharAt(builder.lastIndexOf(")"));
             }
         }
 
+        if (null == s && lowerCase.contains("-") && !lowerCase.contains(" ")) {
+            int move = 0;
+            for (String sp : lowerCase.split("-", -1)) {
+                FilterEntity filterEntity1 = list.get(sp);
+                if (null != filterEntity1) {
+                    isAllUp = filterEntity1.getNoCause();
+                    if (isAllUp && !stringIsUp(sp)) {
+
+                    } else {
+                        s = new TypeDto(englishStart + move, sp.length(), filterEntity1.getType());
+                    }
+                }
+                move += sp.length() + 1;
+            }
+        }
+
+
         // 判断缩写
-        if (null != s) {
+        if (null != s && !lowerCase.contains("-")) {
             if (null != isAllUp && isAllUp && !stringIsUp(builder.toString())) {
                 return null;
             }
